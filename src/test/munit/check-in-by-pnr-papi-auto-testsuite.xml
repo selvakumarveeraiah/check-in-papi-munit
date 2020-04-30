@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="check-in-by-pnr-papi-auto-testsuite.xml" />
+	<munit:test name="check-in-by-pnr-papi-auto-test.xml" doc:id="3be12ef2-4af4-42a4-af89-1cc898c58279" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock PNR" doc:id="bcb58e59-8d72-4acb-a327-87571f1ba12d" processor="set-variable">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f6ba2a10-0622-407d-94c3-c60fcaf90e3c" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="PNR" value="#[output application/java --- readUrl('classpath://checkinbypnrpapiautotestxml/mock_variable_.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock checkIn" doc:id="d3c2e7bb-8bd0-4bc8-b5ac-4c42c895d94b" processor="set-variable">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f07f5996-6f98-400e-bda9-13c71ee57410" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="checkIn" value="#[output application/json --- readUrl('classpath://checkinbypnrpapiautotestxml/mock_variable_1.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="PNR" value="#[output application/java --- readUrl('classpath://checkinbypnrpapiautotestxml/mock_variable_2.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="02a04f17-0479-4ad9-bc86-76e0245bd656" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://checkinbypnrpapiautotestxml/set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://checkinbypnrpapiautotestxml/set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to check-in-by-pnr-papi" doc:id="0cae7db6-392c-410a-b51d-be9774d7fef9" name="check-in-by-pnr-papi"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="acd87bae-f279-44f8-8ff5-a0cfb4aaf103" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import checkinbypnrpapiautotestxml::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify flights-management-sapi" doc:id="3cd27c1a-73e1-47eb-87e5-14e299ca39c3" processor="flow-ref" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="03b1a8fc-ff5a-4106-a20f-e2c4726b9a54" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Verify create-payment-forbags-sapi" doc:id="5f34a964-016d-4131-b385-f3adb695da39" processor="flow-ref" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="faec4469-1726-4fa6-b99c-b253ddec5137" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+</mule>

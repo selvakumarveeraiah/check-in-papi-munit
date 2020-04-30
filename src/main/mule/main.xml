@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="0fd49caa-5b7e-4027-9c2c-4c3086d1badf" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="check-in-by-pnr-papi" doc:id="47bd0776-2fef-4197-a82b-20073ce7426d" >
+		<http:listener doc:name="PUT /checkin/{PNR}" doc:id="cc01c5f9-2236-4b3a-bf89-df5c18183caa" config-ref="HTTP_Listener_config" path="/checkin/{PNR}" allowedMethods="PUT">
+			<http:response >
+				<http:body ><![CDATA[#[output application/json --- payload]]]></http:body>
+			</http:response>
+		</http:listener>
+		<set-variable value="#[message.attributes.uriParams.PNR]" doc:name="PNR" doc:id="f6ba2a10-0622-407d-94c3-c60fcaf90e3c" variableName="PNR"/>
+		<set-variable value="#[payload]" doc:name="checkIn" doc:id="f07f5996-6f98-400e-bda9-13c71ee57410" variableName="checkIn"/>
+		<logger level="INFO" doc:name="Logger" doc:id="bb89f974-c62e-4ef4-9288-91554409d928" message="#[output application/json --- 
+{
+	msg: 'Mr. ' ++ payload.lastName as String
+	     ++ ', your PNR is: '
+	     ++ vars.PNR as String
+}]"/>
+		<flow-ref doc:name="flights-management-sapi" doc:id="03b1a8fc-ff5a-4106-a20f-e2c4726b9a54" name="flights-management-sapi"/>
+		<flow-ref doc:name="register-passenger-data-sapi" doc:id="05783bfd-2873-4458-9aeb-d83574639b7e" name="register-passenger-data-sapi"/>
+		<flow-ref doc:name="create-payment-forbags-sapi" doc:id="faec4469-1726-4fa6-b99c-b253ddec5137" name="create-payment-forbags-sapi"/>
+		<ee:transform doc:name="Transform Message" doc:id="066d14dd-46b1-422b-9b2d-bf58a390ba95" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+    "paymentID": "PAY-1AKD7482FAB9STATKO"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	
+	
+	
+	
+	<flow name="flights-management-sapi" doc:id="c4fb000c-01d7-449c-83a0-9758c512d4fb" >
+		<logger level="INFO" doc:name="Logger" doc:id="7079681b-1186-4eb9-b20b-6872f48d68a7" message="#['Processing flights-management-sapi...']"/>
+	</flow>
+
+
+	<flow name="register-passenger-data-sapi" doc:id="aa7536d2-033e-4a9c-922d-c45de5278afb" >
+		<logger level="INFO" doc:name="Logger" doc:id="5a7169a1-dd51-426d-af3f-a06d6c4c4359" message="#['Processing register-passenger-data-sapi-sapi...']"/>
+	</flow>
+
+
+	<flow name="create-payment-forbags-sapi" doc:id="47a35605-1f97-4cb4-a516-9302f4b880bc" >
+		<logger level="INFO" doc:name="Logger" doc:id="9d5d32f9-4634-4b04-817f-24ccac5f727d" message="#['Processing create-payment-forbags-sapi...']"/>
+		<ee:transform doc:name="Transform Message" doc:id="5b22a13e-5a1a-4e78-956a-a691cc27efc5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+  "lastName": "Smith",
+  "numBags": 2,
+  status: 'PAID'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7cdf8688-e5ba-474b-bdff-117f95868310" >
+				<raise-error doc:name="Raise error" doc:id="e963b8fc-fbd8-461e-82b3-bd7a489e8aca" type="PAYMENT_APP:CANT_CREATE_PAYMENT" />
+			</on-error-continue>
+		</error-handler>
+	
+</flow>
+	
+	
+</mule>
